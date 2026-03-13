@@ -608,7 +608,7 @@ get_env_flags() {
 start_ray_head() {
     local container="$1"
     echo "Starting Ray HEAD node on $HEAD_IP..."
-    docker exec -d $(get_env_flags "$HEAD_IP") "$container" bash -c \
+    docker exec -d "$container" bash -c \
         "ray start --block --head --port 6379 --object-store-memory 1073741824 --num-cpus 2 \
          --node-ip-address $HEAD_IP --include-dashboard=false --disable-usage-stats \
          >> /proc/1/fd/1 2>&1"
@@ -618,9 +618,8 @@ start_ray_head() {
 start_ray_worker() {
     local worker_ip="$1"; local container="$2"
     echo "Starting Ray WORKER node on $worker_ip..."
-    local env_flags; env_flags=$(get_env_flags "$worker_ip")
     ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$worker_ip" \
-        "docker exec -d $env_flags $container bash -c \
+        "docker exec -d $container bash -c \
          'ray start --block --object-store-memory 1073741824 --num-cpus 2 --disable-usage-stats \
           --address=$HEAD_IP:6379 --node-ip-address $worker_ip >> /proc/1/fd/1 2>&1'"
 }
@@ -740,11 +739,11 @@ wait_for_cluster() {
 _exec_on_head() {
     local cmd="$1"
     if [[ "$DAEMON_MODE" == "true" ]]; then
-        docker exec -d $(get_env_flags "$HEAD_IP") "$CONTAINER_NAME" bash -c "$cmd >> /proc/1/fd/1 2>&1"
+        docker exec -d "$CONTAINER_NAME" bash -c "$cmd >> /proc/1/fd/1 2>&1"
         echo "Command dispatched in background (Daemon mode). Container: $CONTAINER_NAME"
     else
         if [ -t 0 ]; then DOCKER_EXEC_FLAGS="-it"; else DOCKER_EXEC_FLAGS="-i"; fi
-        docker exec $DOCKER_EXEC_FLAGS $(get_env_flags "$HEAD_IP") "$CONTAINER_NAME" bash -c "$cmd"
+        docker exec $DOCKER_EXEC_FLAGS "$CONTAINER_NAME" $cmd
     fi
 }
 
@@ -765,9 +764,8 @@ exec_no_ray_cluster() {
             worker_cmd="$clean --nnodes $total_nodes --node-rank $rank --master-addr $HEAD_IP --headless"
         fi
         echo "Launching worker (rank $rank) on $worker..."
-        local env_flags; env_flags=$(get_env_flags "$worker")
         ssh -o BatchMode=yes -o StrictHostKeyChecking=no "$worker" \
-            "docker exec -d $env_flags $CONTAINER_NAME bash -c \"$worker_cmd >> /proc/1/fd/1 2>&1\""
+            "docker exec -d $CONTAINER_NAME bash -c \"$worker_cmd >> /proc/1/fd/1 2>&1\""
         (( rank++ ))
     done
 
@@ -783,11 +781,11 @@ exec_no_ray_cluster() {
 
     echo "Executing command on head node (rank 0): $head_cmd"
     if [[ "$DAEMON_MODE" == "true" ]]; then
-        docker exec -d $(get_env_flags "$HEAD_IP") "$CONTAINER_NAME" bash -c "$head_cmd >> /proc/1/fd/1 2>&1"
+        docker exec -d "$CONTAINER_NAME" bash -c "$head_cmd >> /proc/1/fd/1 2>&1"
         echo "Command dispatched in background (Daemon mode). Container: $CONTAINER_NAME"
     else
         if [ -t 0 ]; then DOCKER_EXEC_FLAGS="-it"; else DOCKER_EXEC_FLAGS="-i"; fi
-        docker exec $DOCKER_EXEC_FLAGS $(get_env_flags "$HEAD_IP") "$CONTAINER_NAME" bash -c "$head_cmd"
+        docker exec $DOCKER_EXEC_FLAGS "$CONTAINER_NAME" $head_cmd
     fi
 }
 
