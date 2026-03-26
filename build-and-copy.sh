@@ -282,6 +282,7 @@ usage() {
     echo "  --network <network>           : Docker network to use during build"
     echo "  --cleanup                     : Remove all *.whl and *.-commit files in wheels directory"
     echo "  --config                      : Path to .env configuration file (default: .env in script directory)"
+    echo "  --setup                       : Force autodiscovery and save configuration (even if .env exists)"
     echo "  -h, --help                    : Show this help message"
     exit 1
 }
@@ -334,6 +335,7 @@ while [[ "$#" -gt 0 ]]; do
             fi
             ;;
         --config) CONFIG_FILE="$2"; CONFIG_FILE_SET=true; shift ;;
+        --setup) FORCE_DISCOVER=true; export FORCE_DISCOVER ;;
         -h|--help) usage ;;
         *) echo "Unknown parameter passed: $1"; usage ;;
     esac
@@ -343,6 +345,18 @@ done
 # Source autodiscover.sh to load .env file
 source "$(dirname "$0")/autodiscover.sh"
 
+# If --setup: force full autodiscovery and save configuration
+if [[ "${FORCE_DISCOVER:-false}" == "true" ]]; then
+    echo "Running full autodiscovery (--setup)..."
+    detect_interfaces || exit 1
+    detect_local_ip || exit 1
+    detect_nodes || exit 1
+    detect_copy_hosts || exit 1
+    save_config || exit 1
+    # Reload .env so DOTENV_* variables reflect saved config
+    load_env_if_exists
+fi
+
 # Handle COPY_HOSTS from .env or autodiscovery if not specified via arguments
 if [ "${#COPY_HOSTS[@]}" -eq 0 ]; then
     if [[ -n "$DOTENV_COPY_HOSTS" ]]; then
@@ -351,19 +365,18 @@ if [ "${#COPY_HOSTS[@]}" -eq 0 ]; then
         COPY_HOSTS=("${HOSTS_FROM_ENV[@]}")
     else
         echo "No hosts specified. Using autodiscovery..."
-        detect_nodes
-        if [ $? -ne 0 ]; then
-            echo "Error: Autodiscovery failed."
-            exit 1
-        fi
+        detect_interfaces || { echo "Error: Interface detection failed."; exit 1; }
+        detect_local_ip || { echo "Error: Local IP detection failed."; exit 1; }
+        detect_nodes || { echo "Error: Node detection failed."; exit 1; }
+        detect_copy_hosts || { echo "Error: Copy host detection failed."; exit 1; }
 
-        if [ ${#PEER_NODES[@]} -gt 0 ]; then
-            COPY_HOSTS=("${PEER_NODES[@]}")
+        if [ "${#COPY_PEER_NODES[@]}" -gt 0 ]; then
+            COPY_HOSTS=("${COPY_PEER_NODES[@]}")
         fi
 
         if [ "${#COPY_HOSTS[@]}" -eq 0 ]; then
-              echo "Error: Autodiscovery found no other nodes."
-              exit 1
+            echo "Error: Autodiscovery found no other nodes."
+            exit 1
         fi
         echo "Autodiscovered hosts: ${COPY_HOSTS[*]}"
     fi

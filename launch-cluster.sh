@@ -68,7 +68,8 @@ usage() {
     echo "  --mem-swap-limit-gb Memory+swap limit in GB (default: mem-limit + 10, only with --non-privileged)"
     echo "  --pids-limit    Process limit (default: 4096, only with --non-privileged)"
     echo "  --shm-size-gb   Shared memory size in GB (default: 64, only with --non-privileged)"
-    echo "  --config        Path to .env configuration file (default: .env in script directory)"
+    echo "  --config        Path to .env configuration file (default: .env in script directory)
+  --setup         Force autodiscovery and save configuration (even if .env exists)"
     echo "  action          start | stop | status | exec (Default: start). Not compatible with --launch-script."
     echo "  command         Command to run (only for 'exec' action). Not compatible with --launch-script."
     echo ""
@@ -131,6 +132,7 @@ while [[ "$#" -gt 0 ]]; do
         -d) DAEMON_MODE="true" ;;
         -h|--help) usage ;;
         --config) CONFIG_FILE="$2"; shift ;;
+        --setup) FORCE_DISCOVER=true; export FORCE_DISCOVER ;;
         start|stop|status) 
             if [[ -n "$LAUNCH_SCRIPT_PATH" ]]; then
                 echo "Error: Action '$1' is not compatible with --launch-script. Please omit the action or not use --launch-script."
@@ -410,6 +412,21 @@ done
 # --- Auto-Detection Logic ---
 # Source autodiscover module
 source "$(dirname "$0")/autodiscover.sh"
+
+if [[ "${FORCE_DISCOVER:-false}" == "true" ]]; then
+    # --setup: force full autodiscovery and save configuration
+    echo "Running full autodiscovery (--setup)..."
+    detect_interfaces || exit 1
+    detect_local_ip || exit 1
+    detect_nodes || exit 1
+    detect_copy_hosts || exit 1
+    save_config || exit 1
+    # Reload .env so DOTENV_* variables reflect saved config
+    load_env_if_exists
+    [[ -z "$NODES_ARG" && -n "$DOTENV_CLUSTER_NODES" ]] && NODES_ARG="$DOTENV_CLUSTER_NODES"
+    [[ -z "$ETH_IF" && -n "$DOTENV_ETH_IF" ]] && ETH_IF="$DOTENV_ETH_IF"
+    [[ -z "$IB_IF" && -n "$DOTENV_IB_IF" ]] && IB_IF="$DOTENV_IB_IF"
+fi
 
 if [[ "$SOLO_MODE" == "true" ]]; then
     # Solo mode: skip node detection, just get local IP
