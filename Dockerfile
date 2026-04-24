@@ -32,6 +32,9 @@ ENV UV_LINK_MODE=copy
 # Set timeouts
 ENV UV_HTTP_TIMEOUT=600
 ENV UV_HTTP_RETRIES=10
+# Set pip source
+ENV UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+ENV PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
 
 # Set the base directory environment variable
 ENV VLLM_BASE_DIR=/workspace/vllm
