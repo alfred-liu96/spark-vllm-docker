@@ -270,7 +270,7 @@ COPY --from=vllm-builder /workspace/wheels /
 # =========================================================
 # STAGE 6: Runner (Installs wheels from host ./wheels/)
 # =========================================================
-FROM nvidia/cuda:13.2.0-devel-ubuntu24.04 AS runner
+FROM nvidia/cuda:13.0.3-devel-ubuntu24.04 AS runner
 
 # Transferring build settings from build image because of ptxas/jit compilation during vLLM startup
 # Build parallemism
