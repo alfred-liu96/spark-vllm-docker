@@ -6,7 +6,7 @@ ARG BUILD_JOBS=16
 # =========================================================
 # STAGE 1: Base Build Image
 # =========================================================
-FROM nvidia/cuda:13.2.0-devel-ubuntu24.04 AS base
+FROM nvidia/cuda:13.0.3-devel-ubuntu24.04 AS base
 
 # Build parallemism
 ARG BUILD_JOBS
