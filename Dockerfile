@@ -6,7 +6,7 @@ ARG BUILD_JOBS=16
 # =========================================================
 # STAGE 1: Base Build Image
 # =========================================================
-FROM nvidia/cuda:13.0.3-devel-ubuntu24.04 AS base
+FROM nvidia/cuda:13.2.0-devel-ubuntu24.04 AS base
 
 # Build parallemism
 ARG BUILD_JOBS
@@ -78,7 +78,7 @@ WORKDIR $VLLM_BASE_DIR
 # Build NCCL with mesh support (TODO: only do it if arch is 12.1) - artifacts will be in /workspace/nccl/build/pkg/deb
 RUN git clone -b dgxspark-3node-ring https://github.com/zyang-dev/nccl.git && \
     cd nccl && make -j ${BUILD_JOBS} src.build NVCC_GENCODE="-gencode=arch=compute_121,code=sm_121" && \
-    make pkg.debian.build && apt install -y --no-install-recommends --allow-downgrades --allow-change-held-packages ./build/pkg/deb/*.deb
+    make pkg.debian.build && apt install -y --no-install-recommends --allow-downgrades ./build/pkg/deb/*.deb
 
 # =========================================================
 # STAGE 2: FlashInfer Builder
@@ -270,7 +270,7 @@ COPY --from=vllm-builder /workspace/wheels /
 # =========================================================
 # STAGE 6: Runner (Installs wheels from host ./wheels/)
 # =========================================================
-FROM nvidia/cuda:13.0.3-devel-ubuntu24.04 AS runner
+FROM nvidia/cuda:13.2.0-devel-ubuntu24.04 AS runner
 
 # Transferring build settings from build image because of ptxas/jit compilation during vLLM startup
 # Build parallemism
@@ -302,7 +302,7 @@ RUN --mount=type=bind,from=base,source=/workspace/vllm/nccl/build/pkg/deb,target
     libcudnn9-cuda-13 \
     libibverbs1 libibverbs-dev rdma-core \
     libxcb1 \
-    && cd /workspace/nccl-pkg && apt install -y --no-install-recommends --allow-downgrades --allow-change-held-packages ./*.deb \
+    && cd /workspace/nccl-pkg && apt install -y --no-install-recommends --allow-downgrades ./*.deb \
     && rm -rf /var/lib/apt/lists/* \
     && pip install uv
 
