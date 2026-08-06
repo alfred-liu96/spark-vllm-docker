@@ -1,5 +1,4 @@
 .env
 build-metadata.yaml
 .DS_STORE
-.idea/
-.venv/
+.wheel-cache/
