@@ -1,0 +1,40 @@
+name: Sync Upstream
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync_latest_from_upstream:
+    name: Sync ${{ matrix.branch }} from upstream
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false  # 单个分支同步失败不影响其他分支
+      matrix:
+        branch: [main, b12x]  # 在这里配置你想同步的分支列表
+
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout target repo
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: ${{ matrix.branch }}
+
+    - name: Sync upstream changes
+      id: sync
+      uses: aormsby/Fork-Sync-With-Upstream-action@v3.4.1
+      with:
+        target_sync_branch: ${{ matrix.branch }}
+        upstream_sync_branch: ${{ matrix.branch }}
+        upstream_sync_repo: eugr/spark-vllm-docker
+        target_repo_token: ${{ secrets.GITHUB_TOKEN }}
+        test_mode: false
+
+    - name: Sync check
+      if: failure()
+      run: |
+        echo "::error::分支 ${{ matrix.branch }} 同步失败，请检查 upstream 仓库或权限设置"
+        exit 1
