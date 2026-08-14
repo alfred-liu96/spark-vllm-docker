@@ -1,7 +1,8 @@
 name: Sync Upstream
 on:
   schedule:
-    - cron: '0 6 * * *'
+    # 北京时间 06:00 → UTC 22:00 (前一天晚上)
+    - cron: '0 22 * * *'
   workflow_dispatch:
 
 jobs:
@@ -11,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false  # 单个分支同步失败不影响其他分支
       matrix:
-        branch: [main, b12x]  # 在这里配置你想同步的分支列表
+        branch: [main]  # 在这里配置你想同步的分支列表
 
     permissions:
       contents: write
