@@ -22,7 +22,7 @@ defaults:
   host: 0.0.0.0
   tensor_parallel: 2
   gpu_memory_utilization: 0.85
-  max_model_len: 1000000
+  max_model_len: auto
   block_size: 256
   max_num_seqs: 6
   max_num_batched_tokens: 8192
