@@ -1,7 +1,13 @@
 .env
+.env-*
 build-metadata.yaml
 .DS_STORE
 .wheel-cache/
-
-.idea/
-.venv/
+mods/draft
+recipes/backups
+recipes/draft
+tests/draft
+benchmark-plots
+backup-wheels
+.codex
+wheels
