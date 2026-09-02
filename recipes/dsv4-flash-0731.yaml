@@ -47,6 +47,9 @@ env:
   B12X_MOE_FORCE_A8: "1"
   HF_ENDPOINT: https://hf-mirror.com
   TZ: Asia/Shanghai
+  HF_TOKEN: ""
+  HUGGING_FACE_HUB_TOKEN: ""
+  HF_HUB_DISABLE_IMPLICIT_TOKEN: 1
 
 command: |
   vllm serve deepseek-ai/DeepSeek-V4-Flash-0731 \
