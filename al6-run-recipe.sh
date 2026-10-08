@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-DEFAULT_TAG="vllm-node-b12x:20260928"
+DEFAULT_TAG="vllm-node-b12x:20261007"
 
 # 调用 run-recipe.sh，传入默认的 -t 参数、需要补充的环境变量，以及所有额外参数
 ./run-recipe.sh -t "$DEFAULT_TAG" \
